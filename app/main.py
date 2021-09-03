@@ -1,5 +1,3 @@
-from typing import Optional, List
-
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
@@ -7,10 +5,17 @@ from pydantic import BaseModel
 
 class Room(BaseModel):
     roomName: str
-    votes: List[int]
+    privateVotes: dict
+
+    def get_votes(self):
+        toReturn = []
+        toReturn.extend(self.privateVotes.values())
+        return toReturn
 
 
 rooms = []
+cookie_string: str = "KonfiDenceVoteCookie"
+cookieCount = 0
 
 app = FastAPI()
 app.add_middleware(
@@ -20,6 +25,11 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+def get_cookie_value():
+    main.cookieCount += 1
+    return main.cookieCount
 
 
 @app.get("/")
@@ -36,22 +46,28 @@ def do_test():
 def addRoom(roomName: str):
     for room in rooms:
         if room.roomName == roomName:
-            room.votes = []
+            room.privateVotes = {}
             return room
-    r = Room(roomName = roomName, votes = [])
+    r = Room(roomName=roomName, privateVotes={})
     rooms.append(r)
     return r
 
 
 @app.post("/vote")
-def vote(vote: int, roomName: str):
+def vote(vote: int, roomName: str, fakeCookie: int):
+    cookieNumber = 0
+    if fakeCookie == 0:
+        cookieNumber = get_cookie_value()
+    else:
+        cookieNumber = fakeCookie
     for room in rooms:
         if room.roomName == roomName:
-            room.votes.append(vote)
+            room.privateVotes[str(cookieNumber)] = vote
+    return cookieNumber
 
 
 @app.get("/room")
 def getRooms(roomName: str):
     for room in rooms:
         if room.roomName == roomName:
-            return room.votes
+            return room.get_votes()
