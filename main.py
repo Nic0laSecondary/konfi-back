@@ -15,7 +15,8 @@ class Room(BaseModel):
 
 rooms = []
 cookie_string: str = "KonfiDenceVoteCookie"
-cookieCount = 0
+global cookie_count
+cookie_count: int = 0
 
 app = FastAPI()
 app.add_middleware(
@@ -25,11 +26,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-
-def get_cookie_value():
-    main.cookieCount += 1
-    return main.cookieCount
 
 
 @app.get("/")
@@ -57,7 +53,9 @@ def addRoom(roomName: str):
 def vote(vote: int, roomName: str, fakeCookie: int):
     cookieNumber = 0
     if fakeCookie == 0:
-        cookieNumber = get_cookie_value()
+        global cookie_count
+        cookie_count += 1
+        cookieNumber = cookie_count
     else:
         cookieNumber = fakeCookie
     for room in rooms:
