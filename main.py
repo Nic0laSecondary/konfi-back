@@ -16,7 +16,7 @@ class Room(BaseModel):
 rooms = []
 cookie_string: str = "KonfiDenceVoteCookie"
 global cookie_count
-cookie_count: int = 0
+cookie_count = 0
 
 app = FastAPI()
 app.add_middleware(
